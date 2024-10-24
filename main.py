@@ -1,5 +1,5 @@
 import glob
-
+import os
 import cv2
 import time
 from emailing import send_email
@@ -12,6 +12,13 @@ status_list = []
 count = 1
 save_time = 0.5
 last_detection_time = 0
+
+
+def clean_folder():
+    images = glob.glob("images/*.png")
+    for image in images:
+        os.remove(image)
+
 
 while True:
     status = 0
@@ -27,7 +34,7 @@ while True:
     dil_frame = cv2.dilate(thresh_frame, None, iterations=2)
     cv2.imshow("My  Video", dil_frame)
 
-    contours, check = cv2.findContours(dil_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours= cv2.findContours(dil_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for contour in contours:
         if cv2.contourArea(contour) < 6000:
@@ -44,14 +51,16 @@ while True:
                 all_images = glob.glob("images/*.png")
                 index = int(len(all_images) / 2)
                 image_with_obj = all_images[index]
-
+            else:
+                image_with_obj = None
             last_detection_time = current_time
 
     status_list.append(status)
     status_list = status_list[-2:]
 
     if status_list[0] == 1 and status_list[1] == 0:
-        send_email()
+        send_email(image_with_obj)
+        clean_folder()
 
     cv2.imshow("Video", frame)
     key = cv2.waitKey(1)
