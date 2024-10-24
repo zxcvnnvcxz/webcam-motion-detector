@@ -1,31 +1,17 @@
-""" FOR REFERENCE
-import cv2
-import numpy
-
-array = cv2.imread("image.png")
-
-print(array.shape)
-print(array)
-
-a = numpy.array(
-[[[255, 0, 0],
- [255, 0, 0],
- [255, 0, 0]],
-
- [[255, 255, 0],
- [255, 0, 255],
- [255, 255, 0]]]
-)
-
-cv2.imwrite('image1.png', a)"""
+import glob
 
 import cv2
 import time
 from emailing import send_email
+
 video = cv2.VideoCapture(0)
 time.sleep(1)
+
 first_frame = None
 status_list = []
+count = 1
+save_time = 0.5
+last_detection_time = 0
 
 while True:
     status = 0
@@ -50,6 +36,16 @@ while True:
         rectangle = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0))
         if rectangle.any():
             status = 1
+            current_time = time.time()
+
+            if current_time - last_detection_time >= save_time:
+                cv2.imwrite(f"images/{count}.png", frame)
+                count += 1
+                all_images = glob.glob("images/*.png")
+                index = int(len(all_images) / 2)
+                image_with_obj = all_images[index]
+
+            last_detection_time = current_time
 
     status_list.append(status)
     status_list = status_list[-2:]
@@ -58,7 +54,7 @@ while True:
         send_email()
 
     cv2.imshow("Video", frame)
-    key = cv.waitKey(1)
+    key = cv2.waitKey(1)
 
     if key == ord("q"):
         break
