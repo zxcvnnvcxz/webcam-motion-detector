@@ -1,5 +1,7 @@
 import glob
 import os
+from threading import Thread
+
 import cv2
 import time
 from emailing import send_email
@@ -59,8 +61,10 @@ while True:
     status_list = status_list[-2:]
 
     if status_list[0] == 1 and status_list[1] == 0:
-        send_email(image_with_obj)
-        clean_folder()
+        email_thread = Thread(target=send_email, args=(image_with_obj, )) # make it into a tuple with comma, otherwise Python will treat a string
+        email_thread.daemon = True
+        email_thread.start()
+
 
     cv2.imshow("Video", frame)
     key = cv2.waitKey(1)
@@ -69,3 +73,6 @@ while True:
         break
 
 video.release()
+clean_thread = Thread(target=clean_folder)
+clean_thread.daemon = True
+clean_thread.start()
